@@ -43,7 +43,7 @@ def item(r, key, label, kind):
             + pos(r, 40 - len(kind)) + fg(CYAN) + text(kind))
 
 
-def menu(L):
+def menu(L, modem=False):
     s = CUR_OFF + CLS + pos(0, 1) + CAN
     s += band(1, BLUE) + band(2, BLUE)
     s += pos(2, 15) + bg(BLUE) + fg(YELLOW) + DBLH + " KIOSQUE 64"
@@ -61,11 +61,13 @@ def menu(L):
     s += item(16, "8", "BBS LABBEJ27", "ASCII")
     s += item(17, "9", L["other"], "")
     s += item(18, "G", L["grey"], "")
+    if modem:
+        s += pos(18, 24) + fg(YELLOW) + INV + "M" + NOINV + " " + fg(WHITE) + text(L["modem"])
     s += pos(19, 2) + fg(GREEN) + text(L["keys"])
     for i, line in enumerate(L["keylines"]):
         assert len(line) <= 38, line
         s += pos(20 + i, 3) + fg(WHITE) + text(line)
-    s += pos(24, 2) + fg(BLUE) + text(L["footer"])
+    s += pos(24, 2) + fg(BLUE) + text(L["footer_modem"] if modem else L["footer"])
     return s
 
 
@@ -82,6 +84,24 @@ FR = {
                  "F4 Répétition  F5 Suite  F6 Annulation",
                  "F7 Connexion/Fin    F8 Menu"],
     "footer": "v0.1  2026 LABBEJ27  licence MIT",
+    "footer_modem": "v0.1 modem  2026 LABBEJ27  MIT",
+    "modem": "Modem",
+    "m_title": "Réglages du modem",
+    "m_iface": "User Port RS-232, 8N1",
+    "m_speed": "Vitesse",
+    "m_init": "Initialisation",
+    "m_dial": "Appel",
+    "m_test": "Tester le modem",
+    "m_save": "Enregistrer (lecteur 8)",
+    "m_help": ["Initialisation : commande envoyée",
+               "avant chaque appel (ex. ATE0)."],
+    "m_back": "F8 Retour au menu",
+    "m_empty": "(aucune)",
+    "m_ok": "Le modem répond",
+    "m_no": "Pas de réponse : vitesse, câble ?",
+    "m_saved": "Réglages enregistrés",
+    "m_nosave": "Échec : disque sur le lecteur 8 ?",
+    "e_nomodem": "Le modem ne répond pas (touche M)",
     "connecting": "Connexion à ",
     "e_nouci": "Activez le Command Interface (menu C64)",
     "e_connect": "Connexion impossible",
@@ -104,6 +124,24 @@ EN = {
                  "F4 Répétition  F5 Suite  F6 Annulation",
                  "F7 Connexion/Fin    F8 Menu"],
     "footer": "v0.1  2026 LABBEJ27  MIT licence",
+    "footer_modem": "v0.1 modem  2026 LABBEJ27  MIT",
+    "modem": "Modem",
+    "m_title": "Modem settings",
+    "m_iface": "User Port RS-232, 8N1",
+    "m_speed": "Speed",
+    "m_init": "Init string",
+    "m_dial": "Dial prefix",
+    "m_test": "Test the modem",
+    "m_save": "Save (drive 8)",
+    "m_help": ["Init string: command sent",
+               "before each call (e.g. ATE0)."],
+    "m_back": "F8 Back to the menu",
+    "m_empty": "(none)",
+    "m_ok": "The modem answers",
+    "m_no": "No answer: speed, cable?",
+    "m_saved": "Settings saved",
+    "m_nosave": "Failed: disk in drive 8?",
+    "e_nomodem": "The modem does not answer (key M)",
     "connecting": "Connecting to ",
     "e_nouci": "Enable the Command Interface (C64 menu)",
     "e_connect": "Cannot connect",
@@ -113,6 +151,23 @@ EN = {
     "ask_mt": "E.g. minitel.labbej.fr:8180, ws://host/",
     "ask_bbs": "E.g. bbs.retrocampus.com:6510",
 }
+
+
+def modem_screen(L):
+    """Page des réglages ; les valeurs sont écrites par main.c."""
+    s = CUR_OFF + CLS + pos(0, 1) + CAN
+    s += band(1, BLUE) + band(2, BLUE)
+    s += pos(2, (41 - len(L["m_title"])) // 2) + bg(BLUE) + fg(YELLOW) + DBLH + text(L["m_title"])
+    s += pos(3, 1) + SO + bg(BLUE) + fg(CYAN) + "\x23" + rep(39)
+    s += pos(5, 3) + fg(CYAN) + text(L["m_iface"])
+    for r, k, label in ((7, "1", L["m_speed"]), (9, "2", L["m_init"]), (12, "3", L["m_dial"]),
+                        (14, "4", L["m_test"]), (17, "E", L["m_save"])):
+        s += pos(r, 3) + fg(YELLOW) + INV + k + NOINV + " " + fg(WHITE) + text(label)
+    for i, line in enumerate(L["m_help"]):
+        assert len(line) <= 38, line
+        s += pos(20 + i, 3) + fg(GREEN) + text(line)
+    s += pos(24, 3) + fg(CYAN) + text(L["m_back"])
+    return s
 
 
 def c_string(name, s):
@@ -129,13 +184,27 @@ with open(sys.argv[1], "w") as f:
     f.write("/* Généré par tools/mkscreens.py : écrans en Vidéotex. */\n")
     for lang, L in (("LANG_EN", EN), (None, FR)):
         f.write(f"#ifdef {lang}\n" if lang else "#else\n")
+        # même ordre que l'édition C64 Ultimate, pour qu'elle reste identique
+        f.write("#ifdef MODEM\n")
+        f.write(c_string("SCR_MENU", menu(L, True)))
+        f.write("#else\n")
         f.write(c_string("SCR_MENU", menu(L)))
+        f.write("#endif\n")
         f.write(c_string("MSG_CONNECTING", pos(0, 1) + fg(YELLOW) + text(L["connecting"])))
+        f.write("#ifdef MODEM\n")
+        f.write(c_string("MSG_NOUCI", status(L["e_nomodem"], RED)))
+        f.write("#else\n")
         f.write(c_string("MSG_NOUCI", status(L["e_nouci"], RED)))
+        f.write("#endif\n")
         f.write(c_string("MSG_CONNECT", status(L["e_connect"], RED)))
         f.write(c_string("MSG_WS", status(L["e_ws"], RED)))
         f.write(c_string("MSG_CLOSED", status(L["closed"], YELLOW)))
         f.write(c_string("MSG_ASK", pos(23, 2) + fg(YELLOW) + text(L["ask"]) + fg(WHITE) + CUR_ON))
         f.write(c_string("MSG_ASK_MT", pos(22, 2) + fg(CYAN) + text(L["ask_mt"]) + CAN))
         f.write(c_string("MSG_ASK_BBS", pos(22, 2) + fg(CYAN) + text(L["ask_bbs"]) + CAN))
+        f.write("#ifdef MODEM\n")
+        f.write(c_string("SCR_MODEM", modem_screen(L)))
+        for key in ("m_empty", "m_ok", "m_no", "m_saved", "m_nosave"):
+            f.write(c_string("MSG_" + key.upper(), text(L[key])))
+        f.write("#endif\n")
     f.write("#endif\n")

@@ -65,6 +65,20 @@ curl -X PUT "http://IP-DU-C64/v1/configs/C64%20and%20Cartridge%20Settings/Comman
 curl -X PUT "http://IP-DU-C64/v1/configs:save_to_flash"
 ```
 
+### Édition modem (C64 d'origine)
+
+Sans C64 Ultimate, Kiosque 64 passe par un **modem WiFi** branché sur le port utilisateur, comme ceux qu'on utilise avec CCGMS. Prenez alors `dist/kiosque-modem-fr.crt` (ou `kiosque-modem-en.crt`, ou les `.prg`). La cartouche est au format EasyFlash et fonctionne avec une Kung Fu Flash.
+
+![Réglages du modem](docs/images/modem-fr.png)
+
+- **Branchement** : RS-232 standard du port utilisateur, en niveaux TTL non inversés : réception sur les broches B et C, émission sur la broche M. C'est le réglage « User Port » de CCGMS.
+- **Vitesse** : 300, 1200 ou 2400 bauds, au choix dans **M Modem** depuis le menu. 2400 bauds, c'est deux fois plus vite qu'un vrai Minitel.
+- **Commandes AT** : Kiosque n'utilise que celles qui sont communes aux modems WiFi pour C64 (firmwares ESP8266 de jsalin, Zimodem et dérivés) : `AT`, `ATDT hôte:port`, `CONNECT`, `NO CARRIER`, puis `+++` et `ATH` pour raccrocher. Le telnet et le WebSocket sont gérés par Kiosque lui-même, que le modem s'en occupe ou non.
+- **Réglages** : vitesse, chaîne d'initialisation (envoyée avant chaque appel, par exemple `ATE0`) et préfixe d'appel (`ATDT` par défaut). La touche **4** teste le modem, **E** enregistre les réglages dans `KIOSQUE.CFG` sur le lecteur 8 ; ils sont relus au démarrage.
+- **Sans contrôle de flux** : la plupart des modems WiFi n'en ont pas. Kiosque reçoit donc dans une mémoire tampon de 8 Ko, assez pour une page Minitel entière, même quand le dessin à 1 MHz prend du retard.
+
+Le pilote RS-232 ([`src/rs232.s`](src/rs232.s)) est écrit pour Kiosque, sur interruptions NMI. La couche modem ([`src/modem.c`](src/modem.c)) remplace le Command Interface sans toucher au reste : l'édition C64 Ultimate reste identique octet pour octet. `make modem` fabrique les deux cartouches.
+
 ### WebSocket et chiffrement
 
 Le C64 ne sait pas faire de TLS : seules les adresses `ws://` (non chiffrées) sont joignables, pas les `wss://`. Pour les passerelles MiniPAVI, le plus simple est leur accès telnet (`go.minipavi.fr:516`, `minitel.labbej.fr:8180`).
@@ -81,7 +95,8 @@ Le C64 ne sait pas faire de TLS : seules les adresses `ws://` (non chiffrées) s
 |---|---|
 | Commodore 64 Ultimate (firmware 1.1.0), WiFi, à 1 MHz et à 64 MHz | Testé : MiniPAVI et LABBEJ27 (telnet), 3615 co.de, 3611 et joher.com (WebSocket), Retrocampus BBS, BBS LABBEJ27 ; cartouche et .prg |
 | VICE 3.10 (affichage seulement, pas de réseau) | Testé |
-| C64 d'origine avec Kung Fu Flash 2 et modem WiFi | **Pas encore** : prévu plus tard |
+| Édition modem dans VICE 3.10 (RS-232 du port utilisateur émulé, faux modem [`tests/modem/fakemodem.py`](tests/modem/fakemodem.py) relié à Internet) | Testé à 1200 et 2400 bauds : MiniPAVI, LABBEJ27, 3615 co.de (WebSocket), Retrocampus BBS, BBS LABBEJ27, saisie, raccrochage, réglages enregistrés et relus |
+| C64 d'origine avec Kung Fu Flash 2 et modem WiFi ESP8266 (User Port, 2400 bauds) | Testé : édition modem |
 
 ## Compiler
 
@@ -128,6 +143,18 @@ In the advanced menu (`F2` from the main menu), the same setting is under **C64 
 Then start `dist/kiosque-en.crt` and pick a service with `1`-`9`. Keys: `RETURN` Envoi, `DEL` Correction, `F1` Sommaire, `F2` Guide, `F3` Retour, `F4` Répétition, `F5` Suite, `F6` Annulation, `F7` Connexion/Fin, `F8` back to the menu. Accented letters use `C=` plus a letter (see the table above).
 
 The C64 cannot do TLS, so only `ws://` addresses work, not `wss://`.
+
+### Modem edition (original C64)
+
+Without a C64 Ultimate, use `dist/kiosque-modem-en.crt` (or the `.prg`) with a **WiFi modem on the user port**, the kind people use with CCGMS. The cartridge is in EasyFlash format and works with a Kung Fu Flash.
+
+- **Wiring**: the C64's standard user port RS-232, TTL levels, not inverted: receive on pins B and C, transmit on pin M (CCGMS "User Port").
+- **Speed**: 300, 1200 or 2400 baud, set with **M Modem** in the menu.
+- **AT commands**: only the ones all C64 WiFi modems share (jsalin's ESP8266 firmware, Zimodem and their offspring): `AT`, `ATDT host:port`, `CONNECT`, `NO CARRIER`, then `+++` and `ATH` to hang up. Kiosque handles telnet and WebSocket itself, whether or not the modem does.
+- **Settings**: speed, an init string sent before each call (e.g. `ATE0`) and the dial prefix (`ATDT` by default). Key **4** tests the modem, **E** saves `KIOSQUE.CFG` on drive 8, read back at startup.
+- **No flow control** on most WiFi modems, so Kiosque receives into an 8 KB buffer, enough for a whole Minitel page while drawing at 1 MHz catches up.
+
+Tested on an original C64 with a Kung Fu Flash 2 and an ESP8266 WiFi modem at 2400 baud, and in VICE 3.10 at 1200 and 2400 baud with an emulated user port modem ([`tests/modem/fakemodem.py`](tests/modem/fakemodem.py)). `make modem` builds both cartridges.
 
 ## Building
 

@@ -7,6 +7,9 @@
 #include "net.h"
 #include "uci.h"
 #include "screens.h"
+#ifdef MODEM
+#include "modem.h"
+#endif
 
 void gfx_init(void);
 void gfx_text(void);
@@ -307,10 +310,90 @@ static void connect_to(const struct site *s)
     net_close();
 }
 
+#ifdef MODEM
+/* --- réglages du modem --------------------------------------------- */
+
+static void vdt_at(unsigned char row, unsigned char col, unsigned char color)
+{
+    vdt_put(0x1F);
+    vdt_put(0x40 + row);
+    vdt_put(0x40 + col);
+    vdt_put(0x1B);
+    vdt_put(0x40 + color);
+}
+
+static void show_val(unsigned char row, unsigned char col, const char *s)
+{
+    vdt_at(row, col, 7);
+    vdt_str(*s ? s : MSG_M_EMPTY);
+    vdt_put(0x18);                      /* efface la fin de la rangée */
+}
+
+/* Saisie d'une valeur ; RUN/STOP ou F8 la laisse inchangée. */
+static void edit_val(unsigned char row, unsigned char col, char *dst, unsigned char max)
+{
+    char buf[31];
+    vdt_at(row, col, 7);
+    vdt_put(0x18);
+    vdt_put(0x11);                      /* curseur visible */
+    buf[0] = 1;
+    read_line(buf, max);
+    vdt_put(0x14);
+    if (buf[0] != 1)
+        strcpy(dst, buf);
+}
+
+#ifdef LANG_EN
+static const char *const speeds[] = { "300 baud", "1200 baud", "2400 baud" };
+#else
+static const char *const speeds[] = { "300 bauds", "1200 bauds", "2400 bauds" };
+#endif
+
+static void modem_settings(void)
+{
+    unsigned char k;
+    vdt_reset();
+    vdt_str(SCR_MODEM);
+    for (;;) {
+        show_val(7, 22, speeds[mcfg.speed]);
+        show_val(10, 5, mcfg.init);
+        show_val(12, 22, mcfg.dial);
+        k = waitkey();
+        if (k == 0x8C || k == 0x03 || k == 0x5F)
+            return;
+        if (k == '1') {
+            mcfg.speed = mcfg.speed == MODEM_2400 ? MODEM_300 : mcfg.speed + 1;
+        } else if (k == '2') {
+            edit_val(10, 5, mcfg.init, sizeof(mcfg.init) - 1);
+        } else if (k == '3') {
+            edit_val(12, 22, mcfg.dial, sizeof(mcfg.dial) - 1);
+            if (!mcfg.dial[0])
+                strcpy(mcfg.dial, "ATDT");
+        } else if (k == '4') {
+            vdt_at(15, 5, 7);
+            vdt_str("...\x18");
+            k = uci_present();
+            modem_off();
+            vdt_at(15, 5, k ? 2 : 1);
+            vdt_str(k ? MSG_M_OK : MSG_M_NO);
+            vdt_put(0x18);
+        } else if (k == 'E' || k == 'e' || k == 0xC5) {
+            k = modem_save();
+            vdt_at(18, 5, k ? 1 : 2);
+            vdt_str(k ? MSG_M_NOSAVE : MSG_M_SAVED);
+            vdt_put(0x18);
+        }
+    }
+}
+#endif
+
 int main(void)
 {
     unsigned char k;
     TESTBOX = 0;
+#ifdef MODEM
+    modem_load();
+#endif
     gfx_init();
     for (;;) {
         vdt_reset();
@@ -329,6 +412,11 @@ int main(void)
         } else if (k == 'G' || k == 'g' || k == 0xC7) {
             vdt_grey ^= 1;
         }
+#ifdef MODEM
+        else if (k == 'M' || k == 'm' || k == 0xCD) {
+            modem_settings();
+        }
+#endif
     }
     return 0;
 }
