@@ -21,7 +21,7 @@
 
 ## Utilisation
 
-1. Dans le menu du C64 Ultimate, **C64 and Cartridge Settings → Command Interface → Enabled**.
+1. Activez le **Command Interface** du C64 Ultimate, une fois pour toutes (voir ci-dessous).
 2. Lancez `dist/kiosque-fr.crt` (ou `kiosque-en.crt`, ou les `.prg`).
 3. Choisissez un service avec les touches `1` à `9`.
 
@@ -45,6 +45,25 @@
 | `C=` + `P` | œ |
 
 Comme sur un Minitel, le clavier est en majuscules par défaut ; `Shift` donne les minuscules, sauf si le service passe le clavier en minuscules. Ce que vous tapez s'affiche localement (écho local), sauf si le service le coupe pour renvoyer lui-même les caractères.
+
+### Activer le Command Interface
+
+Kiosque 64 passe par le « Command Interface » du C64 Ultimate pour accéder au réseau. Il est désactivé d'origine ; sans lui, Kiosque affiche « Activez le Command Interface ».
+
+1. **Ouvrez le menu du C64U** : poussez l'interrupteur multifonction (le bouton marche/arrêt) vers le haut et relâchez-le.
+2. Avec les touches du curseur, choisissez **Memory & ROMs** (« Memory Configuration » dans les firmwares plus récents) et validez avec `RETURN`.
+3. Descendez jusqu'à **Command Interface**, juste sous les réglages de la REU, appuyez sur `RETURN` et choisissez **Enabled**.
+4. Quittez le menu avec `RUN/STOP`.
+5. Quand le C64U propose d'enregistrer les réglages en mémoire flash, appuyez sur **`Y`**. Sans cette étape, le réglage est perdu à l'extinction.
+
+Dans le menu avancé (`F2` depuis le menu principal), le même réglage se trouve dans **C64 and Cartridge Settings → Command Interface**.
+
+Avec l'API REST de l'Ultimate (réseau local), on peut aussi faire :
+
+```sh
+curl -X PUT "http://IP-DU-C64/v1/configs/C64%20and%20Cartridge%20Settings/Command%20Interface?value=Enabled"
+curl -X PUT "http://IP-DU-C64/v1/configs:save_to_flash"
+```
 
 ### WebSocket et chiffrement
 
@@ -96,7 +115,17 @@ Outils : `make`, `python3`, [cc65](https://github.com/cc65/cc65). Sur macOS : `b
 
 ## Usage
 
-Enable **C64 and Cartridge Settings → Command Interface** in the Ultimate menu, start `dist/kiosque-en.crt`, pick a service with `1`-`9`. Keys: `RETURN` Envoi, `DEL` Correction, `F1` Sommaire, `F2` Guide, `F3` Retour, `F4` Répétition, `F5` Suite, `F6` Annulation, `F7` Connexion/Fin, `F8` back to the menu. Accented letters use `C=` plus a letter (see the table above).
+First enable the **Command Interface**, once and for all (it is off by default):
+
+1. **Open the C64U Menu**: push the Multi Function Switch (the power switch) upward and release it.
+2. With the cursor keys, select **Memory & ROMs** ("Memory Configuration" in newer firmware) and press `RETURN`.
+3. Go down to **Command Interface**, just below the REU settings, press `RETURN` and choose **Enabled**.
+4. Leave the menu with `RUN/STOP`.
+5. When the C64U offers to save the settings to flash memory, press **`Y`**. Otherwise the setting is lost at power-off.
+
+In the advanced menu (`F2` from the main menu), the same setting is under **C64 and Cartridge Settings → Command Interface**.
+
+Then start `dist/kiosque-en.crt` and pick a service with `1`-`9`. Keys: `RETURN` Envoi, `DEL` Correction, `F1` Sommaire, `F2` Guide, `F3` Retour, `F4` Répétition, `F5` Suite, `F6` Annulation, `F7` Connexion/Fin, `F8` back to the menu. Accented letters use `C=` plus a letter (see the table above).
 
 The C64 cannot do TLS, so only `ws://` addresses work, not `wss://`.
 
