@@ -1,0 +1,12 @@
+build/
+*.o
+__pycache__/
+.DS_Store
+tests/render/*.prg
+tests/render/*.png
+tests/render/page.s
+tests/probe/*.prg
+tests/probe/*.bin
+tests/render/*.vdt
+tests/probe/*.vdt
+*.lst
