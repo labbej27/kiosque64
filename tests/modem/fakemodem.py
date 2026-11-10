@@ -10,8 +10,9 @@ fakemodem.py [port]
 """
 import select, socket, sys, time
 
-PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 25232
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 25232
 GUARD = 1.0
+DEBUG = "-v" in sys.argv
 
 
 def log(*a):
@@ -23,8 +24,6 @@ srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 srv.bind(("127.0.0.1", PORT))
 srv.listen(1)
 log("en attente de VICE sur le port", PORT)
-c64, _ = srv.accept()
-log("VICE connecté")
 
 remote = None
 cmd_mode = True
@@ -72,54 +71,58 @@ def command(cmd):
         out("ERROR\r\n")
 
 
-sent = recv = 0
-while True:
-    socks = [c64] + ([remote] if remote and not cmd_mode else [])
-    r, _, _ = select.select(socks, [], [], 0.05)
-    now = time.time()
-    if c64 in r:
-        data = c64.recv(4096)
-        if not data:
-            log("VICE déconnecté")
-            break
-        for b in data:
-            if cmd_mode:
-                if b in (13, 10):
-                    command(line.decode("latin1"))
-                    line = b""
+while True:   # VICE se reconnecte quand le programme réinitialise l'ACIA
+    c64, _ = srv.accept()
+    log("VICE connecté")
+    cmd_mode, line, plus = True, b"", 0
+    sent = recv = 0
+    while True:
+        socks = [c64] + ([remote] if remote and not cmd_mode else [])
+        r, _, _ = select.select(socks, [], [], 0.05)
+        now = time.time()
+        if c64 in r:
+            data = c64.recv(4096)
+            if not data:
+                log("VICE déconnecté")
+                break
+            for b in data:
+                if cmd_mode:
+                    if b in (13, 10):
+                        command(line.decode("latin1"))
+                        line = b""
+                    else:
+                        line += bytes([b])
+                        out(bytes([b]))                 # écho
                 else:
-                    line += bytes([b])
-                    out(bytes([b]))                 # écho
-            else:
-                if b == 0x2B and plus < 3 and (plus or now - last_rx >= GUARD):
-                    plus += 1
-                    plus_t = now
-                else:
-                    if plus:
-                        remote.sendall(b"+" * plus)
-                        plus = 0
-                    remote.sendall(bytes([b]))
-                    sent += 1
-                last_rx = now
-    if not cmd_mode and plus == 3 and now - plus_t >= GUARD:
-        plus = 0
-        cmd_mode = True
-        log("+++ : mode commande")
-        out("\r\nOK\r\n")
-    if not cmd_mode and 0 < plus < 3 and now - plus_t >= GUARD:
-        remote.sendall(b"+" * plus)
-        plus = 0
-    if remote and not cmd_mode and remote in r:
-        try:
-            data = remote.recv(4096)
-        except OSError:
-            data = b""
-        if data:
-            recv += len(data)
-            out(data)
-        else:
-            log(f"serveur fermé ({recv} octets reçus, {sent} envoyés)")
-            remote.close()
-            remote = None
+                    if b == 0x2B and plus < 3 and (plus or now - last_rx >= GUARD):
+                        plus += 1
+                        plus_t = now
+                    else:
+                        if plus:
+                            remote.sendall(b"+" * plus)
+                            plus = 0
+                        remote.sendall(bytes([b])); log("->", hex(b)) if DEBUG else None
+                        sent += 1
+                    last_rx = now
+        if not cmd_mode and plus == 3 and now - plus_t >= GUARD:
+            plus = 0
             cmd_mode = True
-            out("\r\nNO CARRIER\r\n")
+            log("+++ : mode commande")
+            out("\r\nOK\r\n")
+        if not cmd_mode and 0 < plus < 3 and now - plus_t >= GUARD:
+            remote.sendall(b"+" * plus)
+            plus = 0
+        if remote and not cmd_mode and remote in r:
+            try:
+                data = remote.recv(4096)
+            except OSError:
+                data = b""
+            if data:
+                recv += len(data)
+                out(data)
+            else:
+                log(f"serveur fermé ({recv} octets reçus, {sent} envoyés)")
+                remote.close()
+                remote = None
+                cmd_mode = True
+                out("\r\nNO CARRIER\r\n")

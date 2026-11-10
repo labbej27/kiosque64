@@ -12,6 +12,7 @@
 #include "uci.h"
 #include "modem.h"
 
+extern unsigned char rs_iface;
 void __fastcall__ rs_start(unsigned char speed);
 void rs_stop(void);
 int rs_getc(void);
@@ -20,7 +21,10 @@ unsigned char rs_txbusy(void);
 
 #define JIFFY (*(volatile unsigned char *)0xA2)
 
-struct modem_cfg mcfg = { 'K', MODEM_2400, "", "ATDT" };
+struct modem_cfg mcfg = { 'L', 2, "", "ATDT", IF_USER };
+/* User Port : 2400 ; UP9600 : 9600 ; SwiftLink : 38 400 */
+const unsigned char speed_max[IF_COUNT] = { 2, 4, 6, 6 };
+const unsigned char speed_def[IF_COUNT] = { 2, 4, 4, 4 };
 unsigned char uci_closed;
 char uci_status[40];
 
@@ -30,11 +34,21 @@ static unsigned char nc;                /* repérage de « NO CARRIER » */
 static const char nocarrier[] = "NO CARRIER";
 static char line[40];
 
+static void pause(unsigned char jiffies);
+static void drain(void);
+
 static void driver_on(void)
 {
     if (!on) {
+        rs_iface = mcfg.iface;
         rs_start(mcfg.speed);
         on = 1;
+        /* un retour chariot pour démarrer proprement la ligne (UP9600 :
+           le premier caractère fixe le niveau de repos) ; la réponse
+           éventuelle du modem est ignorée */
+        rs_putc('\r');
+        pause(20);
+        drain();
     }
 }
 
@@ -221,6 +235,12 @@ unsigned int uci_read(unsigned char sock, unsigned char *buf, unsigned int max)
     unsigned int n = 0;
     int c;
     (void)sock;
+    /* Petits lots : entre deux lots, net.c envoie ses réponses (négociation
+       telnet, pong WebSocket) et main.c lit le clavier. Sinon, à 38 400
+       bauds, un lot de 512 octets de texte à afficher retarde la réponse
+       telnet au-delà de ce qu'attend le serveur. */
+    if (max > 64)
+        max = 64;
     if (pending >= 0 && max) {
         buf[n++] = (unsigned char)pending;
         pending = -1;
@@ -268,7 +288,14 @@ unsigned char modem_load(void)
         return 1;
     n = cbm_read(2, &c, sizeof(c));
     cbm_close(2);
-    if (n != sizeof(c) || c.magic != 'K' || c.speed > MODEM_2400)
+    if (n == sizeof(c) - 1 && c.magic == 'K') {
+        /* réglages de la version 0.1 : User Port, mêmes index de vitesse */
+        c.magic = 'L';
+        c.iface = IF_USER;
+    } else if (n != sizeof(c) || c.magic != 'L') {
+        return 1;
+    }
+    if (c.iface >= IF_COUNT || c.speed > speed_max[c.iface])
         return 1;
     c.init[sizeof(c.init) - 1] = 0;
     c.dial[sizeof(c.dial) - 1] = 0;

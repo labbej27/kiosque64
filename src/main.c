@@ -343,10 +343,12 @@ static void edit_val(unsigned char row, unsigned char col, char *dst, unsigned c
         strcpy(dst, buf);
 }
 
+static const char *const ifaces[IF_COUNT] = { "User Port", "UP9600", "SwiftLink $DE00", "SwiftLink $DF00" };
+static const char *const speeds[SPEED_COUNT] = { "300", "1200", "2400", "4800", "9600", "19200", "38400" };
 #ifdef LANG_EN
-static const char *const speeds[] = { "300 baud", "1200 baud", "2400 baud" };
+#define BAUD " baud"
 #else
-static const char *const speeds[] = { "300 bauds", "1200 bauds", "2400 bauds" };
+#define BAUD " bauds"
 #endif
 
 static void modem_settings(void)
@@ -355,21 +357,28 @@ static void modem_settings(void)
     vdt_reset();
     vdt_str(SCR_MODEM);
     for (;;) {
-        show_val(7, 22, speeds[mcfg.speed]);
+        show_val(5, 20, ifaces[mcfg.iface]);
+        vdt_at(7, 20, 7);
+        vdt_str(speeds[mcfg.speed]);
+        vdt_str(BAUD);
+        vdt_put(0x18);
         show_val(10, 5, mcfg.init);
-        show_val(12, 22, mcfg.dial);
+        show_val(12, 20, mcfg.dial);
         k = waitkey();
         if (k == 0x8C || k == 0x03 || k == 0x5F)
             return;
-        if (k == '1') {
-            mcfg.speed = mcfg.speed == MODEM_2400 ? MODEM_300 : mcfg.speed + 1;
-        } else if (k == '2') {
-            edit_val(10, 5, mcfg.init, sizeof(mcfg.init) - 1);
+        if (k == '1') {                         /* interface suivante */
+            mcfg.iface = mcfg.iface + 1 == IF_COUNT ? IF_USER : mcfg.iface + 1;
+            mcfg.speed = speed_def[mcfg.iface];
+        } else if (k == '2') {                  /* vitesse suivante */
+            mcfg.speed = mcfg.speed >= speed_max[mcfg.iface] ? 0 : mcfg.speed + 1;
         } else if (k == '3') {
-            edit_val(12, 22, mcfg.dial, sizeof(mcfg.dial) - 1);
+            edit_val(10, 5, mcfg.init, sizeof(mcfg.init) - 1);
+        } else if (k == '4') {
+            edit_val(12, 20, mcfg.dial, sizeof(mcfg.dial) - 1);
             if (!mcfg.dial[0])
                 strcpy(mcfg.dial, "ATDT");
-        } else if (k == '4') {
+        } else if (k == '5') {
             vdt_at(15, 5, 7);
             vdt_str("...\x18");
             k = uci_present();

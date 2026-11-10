@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Essai de Kiosque 64 modem dans VICE, avec le faux modem fakemodem.py.
 
-vicemodem.py CARTOUCHE.crt DOSSIER_SORTIE [baud] etape...
+vicemodem.py CARTOUCHE.crt|PROGRAMME.prg DOSSIER_SORTIE [baud] [if=user|up9600|sl] etape...
 Etapes : wait:S  keys:4d,34 (codes PETSCII en hexa)  shot:NOM
 """
 import os, socket, subprocess, sys, time
@@ -9,19 +9,24 @@ import os, socket, subprocess, sys, time
 crt, out = map(os.path.abspath, sys.argv[1:3])
 args = sys.argv[3:]
 baud = args.pop(0) if args and args[0].isdigit() else "2400"
+iface = args.pop(0)[3:] if args and args[0].startswith("if=") else "user"
+link = {"user": ["-userportdevice", "2", "-rsuserbaud", baud, "-rsuserdev", "0"],
+        "up9600": ["-userportdevice", "2", "-rsuserup9600", "-rsuserbaud", baud, "-rsuserdev", "0"],
+        "sl": ["-userportdevice", "0", "-acia1", "-acia1base", "0xDE00", "-acia1mode", "1",
+               "-acia1irq", "1", "-myaciadev", "0"]}[iface]
+start = ["-cartcrt", crt] if crt.endswith(".crt") else ["-autostartprgmode", "1", "-autostart", crt]
 here = os.path.dirname(os.path.abspath(__file__))
 MON, MDM = 6518, 25232
 d64 = os.path.join(out, "config.d64")
 if not os.path.exists(d64):
     subprocess.run(["c1541", "-format", "kiosque,km", "d64", d64], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-modem = subprocess.Popen([sys.executable, "-I", os.path.join(here, "fakemodem.py"), str(MDM)],
+modem = subprocess.Popen([sys.executable, "-I", os.path.join(here, "fakemodem.py"), str(MDM)] + (["-v"] if os.environ.get("MODEM_DEBUG") else []),
                          stderr=open(os.path.join(out, "modem.log"), "w"))
 time.sleep(0.5)
 vice = subprocess.Popen(["x64sc", "-console", "-default", "-sounddev", "dummy",
-                         "-userportdevice", "2", "-rsuserbaud", baud, "-rsuserdev", "0",
-                         "-rsdev1", f"127.0.0.1:{MDM}", "-rsdev1baud", baud,
+                         *link, "-rsdev1", f"127.0.0.1:{MDM}", "-rsdev1baud", baud,
                          "-8", d64, "-remotemonitor", "-remotemonitoraddress", f"ip4://127.0.0.1:{MON}",
-                         "-cartcrt", crt], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                         *start], stdout=open(os.path.join(out, "vice.log"), "w"), stderr=subprocess.STDOUT)
 
 
 def mon(cmd):

@@ -84,17 +84,18 @@ FR = {
                  "F4 Répétition  F5 Suite  F6 Annulation",
                  "F7 Connexion/Fin    F8 Menu"],
     "footer": "v0.1  2026 LABBEJ27  licence MIT",
-    "footer_modem": "v0.1 modem  2026 LABBEJ27  MIT",
+    "footer_modem": "v0.2 modem  2026 LABBEJ27  MIT",
     "modem": "Modem",
     "m_title": "Réglages du modem",
-    "m_iface": "User Port RS-232, 8N1",
+    "m_iface": "Interface",
     "m_speed": "Vitesse",
     "m_init": "Initialisation",
     "m_dial": "Appel",
     "m_test": "Tester le modem",
     "m_save": "Enregistrer (lecteur 8)",
-    "m_help": ["Initialisation : commande envoyée",
-               "avant chaque appel (ex. ATE0)."],
+    "m_help": ["Initialisation : envoyée avant chaque",
+               "appel (ex. ATE0). SwiftLink : version",
+               ".prg seulement (port cartouche)."],
     "m_back": "F8 Retour au menu",
     "m_empty": "(aucune)",
     "m_ok": "Le modem répond",
@@ -124,17 +125,18 @@ EN = {
                  "F4 Répétition  F5 Suite  F6 Annulation",
                  "F7 Connexion/Fin    F8 Menu"],
     "footer": "v0.1  2026 LABBEJ27  MIT licence",
-    "footer_modem": "v0.1 modem  2026 LABBEJ27  MIT",
+    "footer_modem": "v0.2 modem  2026 LABBEJ27  MIT",
     "modem": "Modem",
     "m_title": "Modem settings",
-    "m_iface": "User Port RS-232, 8N1",
+    "m_iface": "Interface",
     "m_speed": "Speed",
     "m_init": "Init string",
     "m_dial": "Dial prefix",
     "m_test": "Test the modem",
     "m_save": "Save (drive 8)",
-    "m_help": ["Init string: command sent",
-               "before each call (e.g. ATE0)."],
+    "m_help": ["Init string: sent before each call",
+               "(e.g. ATE0). SwiftLink: .prg version",
+               "only (it uses the cartridge port)."],
     "m_back": "F8 Back to the menu",
     "m_empty": "(none)",
     "m_ok": "The modem answers",
@@ -159,9 +161,8 @@ def modem_screen(L):
     s += band(1, BLUE) + band(2, BLUE)
     s += pos(2, (41 - len(L["m_title"])) // 2) + bg(BLUE) + fg(YELLOW) + DBLH + text(L["m_title"])
     s += pos(3, 1) + SO + bg(BLUE) + fg(CYAN) + "\x23" + rep(39)
-    s += pos(5, 3) + fg(CYAN) + text(L["m_iface"])
-    for r, k, label in ((7, "1", L["m_speed"]), (9, "2", L["m_init"]), (12, "3", L["m_dial"]),
-                        (14, "4", L["m_test"]), (17, "E", L["m_save"])):
+    for r, k, label in ((5, "1", L["m_iface"]), (7, "2", L["m_speed"]), (9, "3", L["m_init"]),
+                        (12, "4", L["m_dial"]), (14, "5", L["m_test"]), (17, "E", L["m_save"])):
         s += pos(r, 3) + fg(YELLOW) + INV + k + NOINV + " " + fg(WHITE) + text(label)
     for i, line in enumerate(L["m_help"]):
         assert len(line) <= 38, line
