@@ -84,7 +84,7 @@ Prenez `dist/kiosque-modem-fr.crt` (format EasyFlash, compatible Kung Fu Flash) 
 - **Contrôle de flux** : la plupart des modems WiFi n'en ont pas. Kiosque reçoit donc dans une mémoire tampon de 8 Ko, assez pour une page Minitel entière quand le dessin à 1 MHz prend du retard. Avec SwiftLink, Kiosque relâche en plus la ligne RTS quand le tampon se remplit.
 - **UP9600** : pendant la connexion, l'horloge à 60 Hz du KERNAL passe sur le timer B du CIA 1, car le timer A cadence l'émission. Tout revient en place au raccrochage.
 
-Les pilotes ([`src/rs232.s`](src/rs232.s)) sont écrits pour Kiosque, d'après les fiches techniques du 6526 et du 6551 et la [description publique d'UP9600](https://www.pagetable.com/?p=1656). La couche modem ([`src/modem.c`](src/modem.c)) remplace le Command Interface sans toucher au reste : l'édition C64 Ultimate reste identique octet pour octet. `make modem` fabrique les cartouches et les `.prg`.
+Les pilotes ([`src/rs232.s`](src/rs232.s)) sont écrits pour Kiosque, d'après les fiches techniques du 6526 et du 6551 et la [description publique d'UP9600](https://www.pagetable.com/?p=1656). La couche modem ([`src/modem.c`](src/modem.c)) remplace le Command Interface ; tout le reste (telnet, WebSocket, Vidéotex) est commun aux deux éditions. `make modem` fabrique les cartouches et les `.prg`.
 
 ### WebSocket et chiffrement
 
@@ -100,7 +100,7 @@ Le C64 ne sait pas faire de TLS : seules les adresses `ws://` (non chiffrées) s
 
 | Configuration | État |
 |---|---|
-| Commodore 64 Ultimate (firmware 1.1.0), WiFi, à 1 MHz et à 64 MHz | Testé : MiniPAVI et LABBEJ27 (telnet), 3615 co.de, 3611 et joher.com (WebSocket), Retrocampus BBS, BBS LABBEJ27 ; cartouche et .prg |
+| Commodore 64 Ultimate (firmware 1.1.0), WiFi, à 1 MHz et à 64 MHz | Testé (v0.1 ; v0.2 : MiniPAVI, LABBEJ27, BBS LABBEJ27 en 40x25) : MiniPAVI et LABBEJ27 (telnet), 3615 co.de, 3611 et joher.com (WebSocket), Retrocampus BBS, BBS LABBEJ27 ; cartouche et .prg |
 | VICE 3.10 (affichage seulement, pas de réseau) | Testé |
 | Édition modem dans VICE 3.10, avec un faux modem relié à Internet ([`tests/modem/fakemodem.py`](tests/modem/fakemodem.py)) | Testé en User Port (1200 et 2400 bauds), UP9600 (9600 bauds) et SwiftLink (9600 et 38 400 bauds) : MiniPAVI, LABBEJ27, MiniMeteo avec saisie, 3615 co.de (WebSocket), Retrocampus BBS, BBS LABBEJ27, raccrochage, réglages enregistrés et relus, aucun octet perdu |
 | C64 d'origine avec Kung Fu Flash 2 et modem WiFi ESP8266 (User Port, 2400 bauds) | Testé : édition modem v0.1 et v0.2 |

@@ -23,14 +23,10 @@ static unsigned char sbuf[136];
 #define SB   250
 #define SE   240
 static unsigned char t_state, t_cmd;
-#ifdef MODEM
-/* Une négociation complète (6 réponses + taille d'écran) fait 27 octets.
-   L'édition C64 Ultimate garde encore l'ancienne taille, 24 : le bloc de
-   taille d'écran peut s'y perdre quand toute la négociation arrive d'un coup. */
+/* Une négociation complète (6 réponses + taille d'écran) fait 27 octets :
+   avec 24 octets (v0.1), la taille d'écran se perdait quand toute la
+   négociation arrivait d'un coup. */
 static unsigned char t_reply[48], t_reply_len;
-#else
-static unsigned char t_reply[24], t_reply_len;
-#endif
 
 static void telnet_byte(unsigned char c)
 {
