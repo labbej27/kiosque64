@@ -100,7 +100,7 @@ Le C64 ne sait pas faire de TLS : seules les adresses `ws://` (non chiffrées) s
 
 | Configuration | État |
 |---|---|
-| Commodore 64 Ultimate (firmware 1.1.0), WiFi, à 1 MHz et à 64 MHz | Testé (v0.1 ; v0.2 : MiniPAVI, LABBEJ27, BBS LABBEJ27 en 40x25) : MiniPAVI et LABBEJ27 (telnet), 3615 co.de, 3611 et joher.com (WebSocket), Retrocampus BBS, BBS LABBEJ27 ; cartouche et .prg |
+| Commodore 64 Ultimate (firmware 1.1.0), WiFi, à 1 MHz et à 64 MHz | Testé (v0.1 ; v0.2.1 : MiniPAVI, LABBEJ27, BBS LABBEJ27 en 40x25, fin de connexion par F7) : MiniPAVI et LABBEJ27 (telnet), 3615 co.de, 3611 et joher.com (WebSocket), Retrocampus BBS, BBS LABBEJ27 ; cartouche et .prg |
 | VICE 3.10 (affichage seulement, pas de réseau) | Testé |
 | Édition modem dans VICE 3.10, avec un faux modem relié à Internet ([`tests/modem/fakemodem.py`](tests/modem/fakemodem.py)) | Testé en User Port (1200 et 2400 bauds), UP9600 (9600 bauds) et SwiftLink (9600 et 38 400 bauds) : MiniPAVI, LABBEJ27, MiniMeteo avec saisie, 3615 co.de (WebSocket), Retrocampus BBS, BBS LABBEJ27, raccrochage, réglages enregistrés et relus, aucun octet perdu |
 | C64 d'origine avec Kung Fu Flash 2 et modem WiFi ESP8266 (User Port, 2400 bauds) | Testé : édition modem v0.1 et v0.2 |

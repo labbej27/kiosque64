@@ -138,6 +138,32 @@ void uci_close(unsigned char sock)
         uci_finish();
 }
 
+/* La connexion est-elle perdue ? L'Ultimate répond « 01,CONNECTION CLOSED
+   BY HOST » quand le serveur ferme proprement, mais selon la façon dont la
+   connexion se termine, il peut aussi répéter « 02,NO DATA: n » avec n le
+   code d'erreur du réseau : 11 (EAGAIN) veut dire « rien pour l'instant »,
+   tout autre code (128 ENOTCONN, 9 EBADF...) une connexion perdue. */
+static void check_closed(void)
+{
+    const char *p;
+    if (uci_status[0] != '0')
+        return;
+    if (uci_status[1] == '1') {
+        uci_closed = 1;
+        return;
+    }
+    if (uci_status[1] != '2')
+        return;
+    for (p = uci_status; *p && *p != ':'; ++p)
+        ;
+    if (*p != ':')
+        return;                       /* pas de code : rien à conclure */
+    while (*++p == ' ')
+        ;
+    if (*p >= '0' && *p <= '9' && !(p[0] == '1' && p[1] == '1' && p[2] == 0))
+        uci_closed = 1;
+}
+
 unsigned int uci_read(unsigned char sock, unsigned char *buf, unsigned int max)
 {
     unsigned int n = 0, len;
@@ -158,8 +184,7 @@ unsigned int uci_read(unsigned char sock, unsigned char *buf, unsigned int max)
             buf[n++] = RESP;
     }
     uci_finish();
-    if (uci_status[0] == '0' && uci_status[1] == '1')
-        uci_closed = 1;           /* « 01,CONNECTION CLOSED BY HOST » */
+    check_closed();
     return n;
 }
 
@@ -174,5 +199,8 @@ unsigned char uci_write(unsigned char sock, const unsigned char *buf, unsigned i
     if (uci_exec())
         return 1;
     uci_finish();
-    return !status_ok();
+    if (status_ok())
+        return 0;
+    uci_closed = 1;               /* « 12,SEND ERROR » : connexion perdue */
+    return 1;
 }
