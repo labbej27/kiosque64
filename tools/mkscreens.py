@@ -83,8 +83,8 @@ FR = {
                  "F1 Sommaire  F2 Guide  F3 Retour",
                  "F4 Répétition  F5 Suite  F6 Annulation",
                  "F7 Connexion/Fin    F8 Menu"],
-    "footer": "v0.2.1  2026 LABBEJ27  licence MIT",
-    "footer_modem": "v0.2 modem  2026 LABBEJ27  MIT",
+    "footer": "v0.2.2  2026 LABBEJ27  licence MIT",
+    "footer_modem": "v0.3 modem  2026 LABBEJ27  MIT",
     "modem": "Modem",
     "m_title": "Réglages du modem",
     "m_iface": "Interface",
@@ -92,6 +92,7 @@ FR = {
     "m_init": "Initialisation",
     "m_dial": "Appel",
     "m_test": "Tester le modem",
+    "m_term": "Terminal (commandes AT)",
     "m_save": "Enregistrer (lecteur 8)",
     "m_help": ["Initialisation : envoyée avant chaque",
                "appel (ex. ATE0). SwiftLink : version",
@@ -110,6 +111,7 @@ FR = {
     "closed": "Connexion terminée - une touche",
     "ask": "Adresse : ",
     "ask_mt": "Ex. minitel.labbej.fr:8180, ws://hôte/",
+    "ask_keys": "RETURN valider     F8 annuler",
     "ask_bbs": "Ex. bbs.retrocampus.com:6510",
 }
 EN = {
@@ -124,8 +126,8 @@ EN = {
                  "F1 Sommaire  F2 Guide  F3 Retour",
                  "F4 Répétition  F5 Suite  F6 Annulation",
                  "F7 Connexion/Fin    F8 Menu"],
-    "footer": "v0.2.1  2026 LABBEJ27  MIT licence",
-    "footer_modem": "v0.2 modem  2026 LABBEJ27  MIT",
+    "footer": "v0.2.2  2026 LABBEJ27  MIT licence",
+    "footer_modem": "v0.3 modem  2026 LABBEJ27  MIT",
     "modem": "Modem",
     "m_title": "Modem settings",
     "m_iface": "Interface",
@@ -133,6 +135,7 @@ EN = {
     "m_init": "Init string",
     "m_dial": "Dial prefix",
     "m_test": "Test the modem",
+    "m_term": "Terminal (AT commands)",
     "m_save": "Save (drive 8)",
     "m_help": ["Init string: sent before each call",
                "(e.g. ATE0). SwiftLink: .prg version",
@@ -151,6 +154,7 @@ EN = {
     "closed": "Connection closed - press a key",
     "ask": "Address: ",
     "ask_mt": "E.g. minitel.labbej.fr:8180, ws://host/",
+    "ask_keys": "RETURN to confirm    F8 to cancel",
     "ask_bbs": "E.g. bbs.retrocampus.com:6510",
 }
 
@@ -162,7 +166,8 @@ def modem_screen(L):
     s += pos(2, (41 - len(L["m_title"])) // 2) + bg(BLUE) + fg(YELLOW) + DBLH + text(L["m_title"])
     s += pos(3, 1) + SO + bg(BLUE) + fg(CYAN) + "\x23" + rep(39)
     for r, k, label in ((5, "1", L["m_iface"]), (7, "2", L["m_speed"]), (9, "3", L["m_init"]),
-                        (12, "4", L["m_dial"]), (14, "5", L["m_test"]), (17, "E", L["m_save"])):
+                        (12, "4", L["m_dial"]), (14, "5", L["m_test"]), (16, "6", L["m_term"]),
+                        (17, "E", L["m_save"])):
         s += pos(r, 3) + fg(YELLOW) + INV + k + NOINV + " " + fg(WHITE) + text(label)
     for i, line in enumerate(L["m_help"]):
         assert len(line) <= 38, line
@@ -200,9 +205,12 @@ with open(sys.argv[1], "w") as f:
         f.write(c_string("MSG_CONNECT", status(L["e_connect"], RED)))
         f.write(c_string("MSG_WS", status(L["e_ws"], RED)))
         f.write(c_string("MSG_CLOSED", status(L["closed"], YELLOW)))
-        f.write(c_string("MSG_ASK", pos(23, 2) + fg(YELLOW) + text(L["ask"]) + fg(WHITE) + CUR_ON))
-        f.write(c_string("MSG_ASK_MT", pos(22, 2) + fg(CYAN) + text(L["ask_mt"]) + CAN))
-        f.write(c_string("MSG_ASK_BBS", pos(22, 2) + fg(CYAN) + text(L["ask_bbs"]) + CAN))
+        # saisie d'une adresse : le bas du menu (aide des touches) est effacé
+        clear = "".join(pos(r, 1) + CAN for r in range(19, 24))
+        f.write(c_string("MSG_ASK", pos(23, 2) + fg(GREEN) + text(L["ask_keys"])
+                         + pos(22, 2) + fg(YELLOW) + text(L["ask"]) + fg(WHITE) + CUR_ON))
+        f.write(c_string("MSG_ASK_MT", clear + pos(20, 2) + fg(CYAN) + text(L["ask_mt"])))
+        f.write(c_string("MSG_ASK_BBS", clear + pos(20, 2) + fg(CYAN) + text(L["ask_bbs"])))
         f.write("#ifdef MODEM\n")
         f.write(c_string("SCR_MODEM", modem_screen(L)))
         for key in ("m_empty", "m_ok", "m_no", "m_saved", "m_nosave"):

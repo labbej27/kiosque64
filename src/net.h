@@ -21,6 +21,11 @@ void net_send(const unsigned char *p, unsigned char n);
 
 extern void (*net_sink)(unsigned char c);
 
+#ifdef MODEM
+void net_raw_open(void);
+void net_raw_close(void);
+#endif
+
 #define NET_ERR_NOUCI   1   /* Command Interface absent */
 #define NET_ERR_CONNECT 2   /* hôte injoignable */
 #define NET_ERR_WS      3   /* le serveur a refusé le WebSocket */

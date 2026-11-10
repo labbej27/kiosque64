@@ -7,6 +7,7 @@
 void gfx_text(void);
 
 static unsigned char ascii, a_esc;
+const char *term_title;                        /* ligne d'en-tête (ASCII), ou 0 */
 
 static void put_petscii(unsigned char c)
 {
@@ -51,6 +52,13 @@ void term_run(unsigned char use_ascii)
     cbm_k_bsout(0x93);
     cbm_k_bsout(0x05);                         /* blanc */
     net_sink = ascii ? put_ascii : put_petscii;
+    if (term_title) {
+        const char *t = term_title;
+        while (*t)
+            put_ascii((unsigned char)*t++);
+        put_ascii(0x0D);
+        put_ascii(0x0D);
+    }
     for (;;) {
         if (net_poll())
             break;

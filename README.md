@@ -79,7 +79,8 @@ Prenez `dist/kiosque-modem-fr.crt` (format EasyFlash, compatible Kung Fu Flash) 
 
 ![Réglages du modem](docs/images/modem-fr.png)
 
-- **Réglages** : **1** interface, **2** vitesse, **3** chaîne d'initialisation (envoyée avant chaque appel, par exemple `ATE0`), **4** préfixe d'appel (`ATDT` par défaut), **5** test du modem, **E** enregistrement dans `KIOSQUE.CFG` sur le lecteur 8. Les réglages sont relus au démarrage ; ceux de la version 0.1 aussi.
+- **Réglages** : **1** interface, **2** vitesse, **3** chaîne d'initialisation (envoyée avant chaque appel, par exemple `ATE0`), **4** préfixe d'appel (`ATDT` par défaut), **5** test du modem, **6** terminal, **E** enregistrement dans `KIOSQUE.CFG` sur le lecteur 8. Les réglages sont relus au démarrage ; ceux de la version 0.1 aussi.
+- **Terminal du modem** (touche 6, depuis la v0.3) : on tape directement au modem (`AT`, `ATI`, `AT&W`…) et on voit ses réponses, comme dans CCGMS, pour le configurer. `F8` revient aux réglages sans raccrocher ni envoyer `+++`.
 - **Commandes AT** : Kiosque n'utilise que celles qui sont communes aux modems WiFi pour C64 (firmwares ESP8266 de jsalin, Zimodem et dérivés) : `AT`, `ATDT hôte:port`, `CONNECT`, `NO CARRIER`, puis `+++` et `ATH` pour raccrocher. Le telnet et le WebSocket sont gérés par Kiosque lui-même, que le modem s'en occupe ou non.
 - **Contrôle de flux** : la plupart des modems WiFi n'en ont pas. Kiosque reçoit donc dans une mémoire tampon de 8 Ko, assez pour une page Minitel entière quand le dessin à 1 MHz prend du retard. Avec SwiftLink, Kiosque relâche en plus la ligne RTS quand le tampon se remplit.
 - **UP9600** : pendant la connexion, l'horloge à 60 Hz du KERNAL passe sur le timer B du CIA 1, car le timer A cadence l'émission. Tout revient en place au raccrochage.
@@ -92,6 +93,9 @@ Le C64 ne sait pas faire de TLS : seules les adresses `ws://` (non chiffrées) s
 
 ### Autre adresse
 
+Touches `6` (Minitel) et `9` (BBS) : un champ vide s'ouvre en bas de l'écran ; `RETURN` valide, `F8` annule.
+
+
 - `minitel.labbej.fr:8180` : telnet ;
 - `ws://hôte:port/chemin` : WebSocket ;
 - pour un BBS, `hôte:port` (telnet, port 23 par défaut).
@@ -100,7 +104,7 @@ Le C64 ne sait pas faire de TLS : seules les adresses `ws://` (non chiffrées) s
 
 | Configuration | État |
 |---|---|
-| Commodore 64 Ultimate (firmware 1.1.0), WiFi, à 1 MHz et à 64 MHz | Testé (v0.1 ; v0.2.1 : MiniPAVI, LABBEJ27, BBS LABBEJ27 en 40x25, fin de connexion par F7) : MiniPAVI et LABBEJ27 (telnet), 3615 co.de, 3611 et joher.com (WebSocket), Retrocampus BBS, BBS LABBEJ27 ; cartouche et .prg |
+| Commodore 64 Ultimate (firmware 1.1.0), WiFi, à 1 MHz et à 64 MHz | Testé (v0.1 ; v0.2.2 : MiniPAVI, LABBEJ27, adresse saisie à la main, BBS LABBEJ27 en 40x25, fin de connexion par F7) : MiniPAVI et LABBEJ27 (telnet), 3615 co.de, 3611 et joher.com (WebSocket), Retrocampus BBS, BBS LABBEJ27 ; cartouche et .prg |
 | VICE 3.10 (affichage seulement, pas de réseau) | Testé |
 | Édition modem dans VICE 3.10, avec un faux modem relié à Internet ([`tests/modem/fakemodem.py`](tests/modem/fakemodem.py)) | Testé en User Port (1200 et 2400 bauds), UP9600 (9600 bauds) et SwiftLink (9600 et 38 400 bauds) : MiniPAVI, LABBEJ27, MiniMeteo avec saisie, 3615 co.de (WebSocket), Retrocampus BBS, BBS LABBEJ27, raccrochage, réglages enregistrés et relus, aucun octet perdu |
 | C64 d'origine avec Kung Fu Flash 2 et modem WiFi ESP8266 (User Port, 2400 bauds) | Testé : édition modem v0.1 et v0.2 |
@@ -162,7 +166,7 @@ Without a C64 Ultimate, Kiosque 64 talks to a **WiFi modem**, the kind people us
 | **UP9600** | Daniel Dallmann's wiring: also pin 7 bridged to C, pin L to 6, transmit on pin 5 | 300 to 9600 baud | `.crt` or `.prg` |
 | **SwiftLink / Turbo232** | 6551 ACIA cartridge at `$DE00` or `$DF00` | 300 to 38,400 baud | `.prg` only: it uses the cartridge port |
 
-Use `dist/kiosque-modem-en.crt` (EasyFlash, works with a Kung Fu Flash) or `dist/kiosque-modem-en.prg`, then set up your modem with **M** in the menu: **1** interface, **2** speed, **3** init string, **4** dial prefix, **5** test, **E** save `KIOSQUE.CFG` on drive 8 (read back at startup, version 0.1 files included).
+Use `dist/kiosque-modem-en.crt` (EasyFlash, works with a Kung Fu Flash) or `dist/kiosque-modem-en.prg`, then set up your modem with **M** in the menu: **1** interface, **2** speed, **3** init string, **4** dial prefix, **5** test, **6** terminal (type AT commands straight to the modem, like in CCGMS; `F8` goes back without hanging up), **E** save `KIOSQUE.CFG` on drive 8 (read back at startup, version 0.1 files included).
 
 Kiosque only uses the AT commands all C64 WiFi modems share (`AT`, `ATDT host:port`, `CONNECT`, `NO CARRIER`, `+++`, `ATH`) and handles telnet and WebSocket itself. Most WiFi modems have no flow control, so Kiosque receives into an 8 KB buffer, enough for a whole Minitel page; with SwiftLink it also drops RTS when the buffer fills up. With UP9600, the KERNAL's 60 Hz interrupt moves to CIA 1 timer B while connected.
 

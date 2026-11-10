@@ -29,6 +29,7 @@ unsigned char uci_closed;
 char uci_status[40];
 
 static unsigned char on;                /* pilote RS-232 démarré */
+unsigned char modem_raw;                /* terminal : pas de détection de NO CARRIER */
 static int pending = -1;                /* octet lu d'avance */
 static unsigned char nc;                /* repérage de « NO CARRIER » */
 static const char nocarrier[] = "NO CARRIER";
@@ -50,6 +51,11 @@ static void driver_on(void)
         pause(20);
         drain();
     }
+}
+
+void modem_on(void)
+{
+    driver_on();
 }
 
 void modem_off(void)
@@ -247,7 +253,8 @@ unsigned int uci_read(unsigned char sock, unsigned char *buf, unsigned int max)
     }
     while (n < max && (c = rs_getc()) >= 0) {
         buf[n++] = (unsigned char)c;
-        watch((unsigned char)c);        /* « NO CARRIER » : fin de connexion */
+        if (!modem_raw)
+            watch((unsigned char)c);    /* « NO CARRIER » : fin de connexion */
     }
     return n;
 }

@@ -31,7 +31,9 @@ extern struct modem_cfg mcfg;
 unsigned char modem_load(void);
 unsigned char modem_save(void);
 
-/* Arrête le pilote RS-232 (avant un accès disque). */
+/* Démarre / arrête le pilote RS-232 (arrêt avant un accès disque). */
+void modem_on(void);
 void modem_off(void);
+extern unsigned char modem_raw;         /* terminal du modem en cours */
 
 #endif

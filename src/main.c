@@ -14,6 +14,7 @@
 void gfx_init(void);
 void gfx_text(void);
 void term_run(unsigned char ascii);
+extern const char *term_title;
 
 #define JIFFY (*(volatile unsigned char *)0xA2)
 #define SIDR ((volatile unsigned char *)0xD400)
@@ -347,8 +348,10 @@ static const char *const ifaces[IF_COUNT] = { "User Port", "UP9600", "SwiftLink 
 static const char *const speeds[SPEED_COUNT] = { "300", "1200", "2400", "4800", "9600", "19200", "38400" };
 #ifdef LANG_EN
 #define BAUD " baud"
+#define TERM_TITLE "Modem terminal: type AT commands. F8: back."
 #else
 #define BAUD " bauds"
+#define TERM_TITLE "Terminal du modem : tapez vos commandes AT. F8 : retour."
 #endif
 
 static void modem_settings(void)
@@ -386,6 +389,19 @@ static void modem_settings(void)
             vdt_at(15, 5, k ? 2 : 1);
             vdt_str(k ? MSG_M_OK : MSG_M_NO);
             vdt_put(0x18);
+        } else if (k == '6') {                  /* terminal : commandes AT */
+            modem_raw = 1;
+            modem_on();
+            net_raw_open();
+            term_title = TERM_TITLE;
+            term_run(1);
+            term_title = 0;
+            net_raw_close();
+            modem_off();
+            modem_raw = 0;
+            gfx_init();
+            vdt_reset();
+            vdt_str(SCR_MODEM);
         } else if (k == 'E' || k == 'e' || k == 0xC5) {
             k = modem_save();
             vdt_at(18, 5, k ? 1 : 2);

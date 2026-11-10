@@ -240,6 +240,22 @@ void net_close(void)
     }
 }
 
+#ifdef MODEM
+/* Terminal du modem : on lit et on écrit le modem directement, sans appel
+   ni telnet ; et on n'envoie ni +++ ni ATH en partant. */
+void net_raw_open(void)
+{
+    kind = NET_TCP;
+    t_state = 0; t_reply_len = 0;
+    sock = 0;
+}
+
+void net_raw_close(void)
+{
+    sock = 0xFF;
+}
+#endif
+
 unsigned char net_poll(void)
 {
     unsigned int n, i;
