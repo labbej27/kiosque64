@@ -247,6 +247,8 @@ void net_raw_open(void)
 {
     kind = NET_TCP;
     t_state = 0; t_reply_len = 0;
+    w_closed = 0;
+    uci_closed = 0;                     /* une session précédente a pu finir sur NO CARRIER */
     sock = 0;
 }
 
