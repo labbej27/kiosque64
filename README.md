@@ -8,7 +8,7 @@
 |---|---|---|
 | ![Menu de Kiosque 64](docs/images/menu-fr.png) | ![MiniPAVI](docs/images/minipavi.png) | ![MiniMeteo](docs/images/meteo.png) |
 
-*Captures faites sur un vrai C64 Ultimate.*
+*Captures faites sur un vrai C64 Ultimate (MiniPAVI, MiniMeteo) et dans VICE (menu, réglages et terminal du modem).*
 
 ## Fonctions
 
@@ -77,7 +77,9 @@ Sans C64 Ultimate, Kiosque 64 passe par un **modem WiFi**, comme ceux qu'on util
 
 Prenez `dist/kiosque-modem-fr.crt` (format EasyFlash, compatible Kung Fu Flash) ou `dist/kiosque-modem-fr.prg`, puis réglez votre modem avec la touche **M** du menu.
 
-![Réglages du modem](docs/images/modem-fr.png)
+| Réglages du modem (touche M) | Terminal du modem (touche 6) |
+|---|---|
+| ![Réglages du modem](docs/images/modem-fr.png) | ![Terminal du modem](docs/images/modem-terminal-fr.png) |
 
 - **Réglages** : **1** interface, **2** vitesse, **3** chaîne d'initialisation (envoyée avant chaque appel, par exemple `ATE0`), **4** préfixe d'appel (`ATDT` par défaut), **5** test du modem, **6** terminal, **E** enregistrement dans `KIOSQUE.CFG` sur le lecteur 8. Les réglages sont relus au démarrage ; ceux de la version 0.1 aussi.
 - **Terminal du modem** (touche 6, depuis la v0.3) : on tape directement au modem (`AT`, `ATI`, `AT&W`…) et on voit ses réponses, comme dans CCGMS, pour le configurer. `F8` revient aux réglages sans raccrocher ni envoyer `+++`.
@@ -165,6 +167,10 @@ Without a C64 Ultimate, Kiosque 64 talks to a **WiFi modem**, the kind people us
 | **User Port** | the C64's standard user port RS-232: receive on pins B and C, transmit on pin M | 300 to 2400 baud | `.crt` or `.prg` |
 | **UP9600** | Daniel Dallmann's wiring: also pin 7 bridged to C, pin L to 6, transmit on pin 5 | 300 to 9600 baud | `.crt` or `.prg` |
 | **SwiftLink / Turbo232** | 6551 ACIA cartridge at `$DE00` or `$DF00` | 300 to 38,400 baud | `.prg` only: it uses the cartridge port |
+
+| Modem settings (key M) | Modem terminal (key 6) |
+|---|---|
+| ![Modem settings](docs/images/modem-fr.png) | ![Modem terminal](docs/images/modem-terminal-fr.png) |
 
 Use `dist/kiosque-modem-en.crt` (EasyFlash, works with a Kung Fu Flash) or `dist/kiosque-modem-en.prg`, then set up your modem with **M** in the menu: **1** interface, **2** speed, **3** init string, **4** dial prefix, **5** test, **6** terminal (type AT commands straight to the modem, like in CCGMS; `F8` goes back without hanging up), **E** save `KIOSQUE.CFG` on drive 8 (read back at startup, version 0.1 files included).
 

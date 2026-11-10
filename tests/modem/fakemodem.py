@@ -45,6 +45,8 @@ def command(cmd):
         return
     if up in ("AT", "ATZ", "ATE0", "ATE1"):
         out("OK\r\n")
+    elif up == "ATI":
+        out("\r\nC64 WIFI MODEM ESP8266\r\nOK\r\n")
     elif up.startswith("ATD"):
         target = up[4:] if up.startswith(("ATDT", "ATDP")) else up[3:]
         host, _, port = target.strip().strip('"').rpartition(":")
